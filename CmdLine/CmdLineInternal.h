@@ -3,7 +3,7 @@
  CmdLineInternal.h
  
  Author: David Petrovic
- GitHub: https://github.com/davepet1234/CmdLine
+ GitHub: https://github.com/davepet1234/CmdLine2
 
 ***********************************************************************/
 
