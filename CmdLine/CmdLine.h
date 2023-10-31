@@ -325,7 +325,7 @@ extern SHELL_STATUS ParseCmdLine(IN PARAMETER_TABLE *ParamTable, IN UINTN ManPar
 
   Returns       NA
 **/
-extern VOID SetProgName(IN CONST CHAR16* name);
+extern VOID SetProgName(IN CONST CHAR16* ProgName);
 
 /**
   CheckProgAbort - Checks to see if Cntrl-C or ESC has been pressed

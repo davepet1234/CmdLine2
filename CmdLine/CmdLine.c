@@ -60,29 +60,29 @@ STATIC CONST CHAR16* GetFileName(CONST CHAR16* PathName);
 STATIC VOID TableError(IN UINTN i, IN CHAR16 *errStr);
 STATIC BOOLEAN ArgNameDefined(IN CHAR16 *HelpStr);
 STATIC UINTN GetArgName(IN CHAR16 *HelpStr, OUT CHAR16* ArgName, IN UINTN ArgNameSize, IN BOOLEAN Mandatory, IN CONST CHAR16 *DefaultArgName);
-STATIC VOID ShowHelp(IN CONST CHAR16 *ProgName, IN UINTN ManParamCount, IN PARAMETER_TABLE *ParamTable, IN SWITCH_TABLE *SwTable, IN CONST CHAR16 *ProgHelpStr, IN UINTN FuncOpt);
+STATIC VOID ShowHelp(IN UINTN ManParamCount, IN PARAMETER_TABLE *ParamTable, IN SWITCH_TABLE *SwTable, IN CONST CHAR16 *ProgHelpStr, IN UINTN FuncOpt);
 
 // globals
-STATIC CHAR16 BreakSwStr1[] = L"-b";
-STATIC CHAR16 BreakSwStr2[] = L"-break";
-STATIC CONST CHAR16 BreakSwStr[] = L"enable page break mode";
+STATIC CONST CHAR16* CONST g_BreakSwStr1 = L"-b";
+STATIC CONST CHAR16* CONST g_BreakSwStr2 = L"-break";
+STATIC CONST CHAR16* CONST g_BreakSwStr = L"enable page break mode";
 
-STATIC CHAR16 HelpSwStr1[] = L"-h";
-STATIC CHAR16 HelpSwStr2[] = L"-help";
-STATIC CONST CHAR16 HelpSwStr[] = L"display this help and exit";
+STATIC CONST CHAR16* CONST g_HelpSwStr1 = L"-h";
+STATIC CONST CHAR16* CONST g_HelpSwStr2 = L"-help";
+STATIC CONST CHAR16* CONST g_HelpSwStr = L"display this help and exit";
 
-STATIC CONST CHAR16 DefaultArgName[] = L"arg";
+STATIC CONST CHAR16* CONST g_DefaultArgName = L"arg";
 
-STATIC CONST CHAR16 *ProgName = NULL;
+STATIC CONST CHAR16 *g_ProgName = NULL;
 
 
 /**
  * SetProgName()
  *
  **/
-VOID SetProgName(IN CONST CHAR16* name)
+VOID SetProgName(IN CONST CHAR16* ProgName)
 {
-    ProgName = name;
+    g_ProgName = ProgName;
 }
 
 /**
@@ -126,15 +126,15 @@ SHELL_STATUS ParseCmdLine(IN PARAMETER_TABLE* ParamTable, IN UINTN ManParamCount
     }
 
     // use cmd line parameter for program name if non specified
-    if (!ProgName) {
-        ProgName = GetFileName(Argv[0]);
+    if (!g_ProgName) {
+        g_ProgName = GetFileName(Argv[0]);
     }
 
     // check if break requested, ignoring all other options
     if (!(FuncOpt & NO_BREAK)) {
         ShellSetPageBreakMode(FALSE);
         for (UINTN i = 0; i < Argc; i++) {
-            if (((StriCmp(Argv[i], BreakSwStr1) == 0) || (StriCmp(Argv[i], BreakSwStr2) == 0))) {
+            if (((StriCmp(Argv[i], g_BreakSwStr1) == 0) || (StriCmp(Argv[i], g_BreakSwStr2) == 0))) {
                 ShellSetPageBreakMode(TRUE);
                 break;
             }
@@ -144,8 +144,8 @@ SHELL_STATUS ParseCmdLine(IN PARAMETER_TABLE* ParamTable, IN UINTN ManParamCount
     // check if help requested, ignoring all other options
     if (!(FuncOpt & NO_HELP)) {
         for (UINTN i = 0; i < Argc; i++) {
-            if (((StriCmp(Argv[i], HelpSwStr1) == 0) || (StriCmp(Argv[i], HelpSwStr2) == 0))) {
-                ShowHelp(ProgName, ManParamCount, ParamTable, SwTable, ProgHelpStr, FuncOpt);
+            if (((StriCmp(Argv[i], g_HelpSwStr1) == 0) || (StriCmp(Argv[i], g_HelpSwStr2) == 0))) {
+                ShowHelp(ManParamCount, ParamTable, SwTable, ProgHelpStr, FuncOpt);
                 ShellStatus = SHELL_ABORTED;
                 goto Error_exit;
             }
@@ -158,7 +158,7 @@ SHELL_STATUS ParseCmdLine(IN PARAMETER_TABLE* ParamTable, IN UINTN ManParamCount
     while (ArgNum < Argc) {
         // SWITCHES
         if ((Argv[ArgNum][0] == L'/') || (Argv[ArgNum][0] == L'-')) {
-            if (((StriCmp(Argv[ArgNum], BreakSwStr1) == 0) || (StriCmp(Argv[ArgNum], BreakSwStr2) == 0))) {
+            if (((StriCmp(Argv[ArgNum], g_BreakSwStr1) == 0) || (StriCmp(Argv[ArgNum], g_BreakSwStr2) == 0))) {
                 // ignore break switch as handled previously
                 ArgNum++;
                 continue;
@@ -184,11 +184,11 @@ SHELL_STATUS ParseCmdLine(IN PARAMETER_TABLE* ParamTable, IN UINTN ManParamCount
                 }
             }
             if (!found) {
-                ShellPrintEx(-1, -1, L"%H%s%N: Unrecognised switch - '%H%s%N'\r\n", ProgName, Argv[ArgNum]);
+                ShellPrintEx(-1, -1, L"%H%s%N: Unrecognised switch - '%H%s%N'\r\n", g_ProgName, Argv[ArgNum]);
                 goto Error_exit;
             }
             if (SwPresent[i]) {
-                ShellPrintEx(-1, -1, L"%H%s%N: Duplicate switch - '%H%s%N'\r\n", ProgName, SwStr);
+                ShellPrintEx(-1, -1, L"%H%s%N: Duplicate switch - '%H%s%N'\r\n", g_ProgName, SwStr);
                 goto Error_exit;
             }
             SwPresent[i] = TRUE;
@@ -203,12 +203,12 @@ SHELL_STATUS ParseCmdLine(IN PARAMETER_TABLE* ParamTable, IN UINTN ManParamCount
             } else {
                 // read switch value
                 if (ArgNum + 1 == Argc) {
-                    ShellPrintEx(-1, -1, L"%H%s%N: Switch '%H%s%N' requires a value\r\n", ProgName, SwStr);
+                    ShellPrintEx(-1, -1, L"%H%s%N: Switch '%H%s%N' requires a value\r\n", g_ProgName, SwStr);
                     goto Error_exit;
                 }
                 ArgNum++;
                 if ((Argv[ArgNum][0] == L'/') || (Argv[ArgNum][0] == L'-')) {
-                    ShellPrintEx(-1, -1, L"%H%s%N: Switch '%H%s%N' requires a value\r\n", ProgName, SwStr);
+                    ShellPrintEx(-1, -1, L"%H%s%N: Switch '%H%s%N' requires a value\r\n", g_ProgName, SwStr);
                     goto Error_exit;
                 }
                 if (SwTable[i].ValueRetPtr.pVoid == NULL) {
@@ -223,7 +223,7 @@ SHELL_STATUS ParseCmdLine(IN PARAMETER_TABLE* ParamTable, IN UINTN ManParamCount
             }
         } else { // PARAMETERS
             if (ParamCount >= TableParamCount) {
-                ShellPrintEx(-1, -1, L"%H%s%N: Too many parameters, only %u required\r\n", ProgName, TableParamCount);
+                ShellPrintEx(-1, -1, L"%H%s%N: Too many parameters, only %u required\r\n", g_ProgName, TableParamCount);
                 goto Error_exit;
             }
             if (ParamTable[ParamCount].ValueRetPtr.pVoid == (VOID *)NULL) {
@@ -246,7 +246,7 @@ SHELL_STATUS ParseCmdLine(IN PARAMETER_TABLE* ParamTable, IN UINTN ManParamCount
 
     // check parameter count
     if (ParamCount < ManParamCount) {
-        ShellPrintEx(-1, -1, L"%H%s%N: Too few parameters, at least %u required\r\n", ProgName, ManParamCount);
+        ShellPrintEx(-1, -1, L"%H%s%N: Too few parameters, at least %u required\r\n", g_ProgName, ManParamCount);
         goto Error_exit;
     }
 
@@ -254,7 +254,7 @@ SHELL_STATUS ParseCmdLine(IN PARAMETER_TABLE* ParamTable, IN UINTN ManParamCount
     UINTN i = 0;
     while (SwTable[i].SwitchNecessity != NO_SW) {
         if (SwTable[i].SwitchNecessity == MAN_SW && !SwPresent[i]) {
-            ShellPrintEx(-1, -1, L"%H%s%N: Missing switch - '%H%s%N'\r\n", ProgName, SwTable[i].SwStr1);
+            ShellPrintEx(-1, -1, L"%H%s%N: Missing switch - '%H%s%N'\r\n", g_ProgName, SwTable[i].SwStr1);
             goto Error_exit;
         }
         i++;
@@ -292,9 +292,9 @@ STATIC VOID ValueError(IN VALUE_STATUS ValStatus, IN CONST CHAR16 *SwStr, IN UIN
         default:                 ErrorStr = L"UNDEFINED ERROR"; break;
     }
     if (SwStr) {
-        ShellPrintEx(-1, -1, L"%H%s%N: Switch '%H%s%N' %s - '%H%s%N'\r\n", ProgName, SwStr, ErrorStr, ValString);
+        ShellPrintEx(-1, -1, L"%H%s%N: Switch '%H%s%N' %s - '%H%s%N'\r\n", g_ProgName, SwStr, ErrorStr, ValString);
     } else {
-        ShellPrintEx(-1, -1, L"%H%s%N: Parameter '%H%u%N' %s - '%H%s%N'\r\n", ProgName, ParamNum, ErrorStr, ValString);
+        ShellPrintEx(-1, -1, L"%H%s%N: Parameter '%H%u%N' %s - '%H%s%N'\r\n", g_ProgName, ParamNum, ErrorStr, ValString);
     }
 }
 
@@ -606,7 +606,7 @@ STATIC UINTN GetArgName(IN CHAR16 *HelpStr, OUT CHAR16* ArgName, IN UINTN ArgNam
 #define ARG_NAME_SIZE   24
 #define PAD_SIZE        20
 
-STATIC VOID ShowHelp(IN CONST CHAR16 *ProgName, IN UINTN ManParamCount, IN PARAMETER_TABLE *ParamTable, IN SWITCH_TABLE *SwTable, IN CONST CHAR16 *ProgHelpStr, IN UINTN FuncOpt)
+STATIC VOID ShowHelp(IN UINTN ManParamCount, IN PARAMETER_TABLE *ParamTable, IN SWITCH_TABLE *SwTable, IN CONST CHAR16 *ProgHelpStr, IN UINTN FuncOpt)
 {
     CHAR16 ArgName[ARG_NAME_SIZE];
     UINTN HelpIdx;
@@ -630,10 +630,14 @@ STATIC VOID ShowHelp(IN CONST CHAR16 *ProgName, IN UINTN ManParamCount, IN PARAM
     }
 
     // usage
-    ShellPrintEx(-1, -1, L"Usage: %s", ProgName);
+    if (g_ProgName) {
+        ShellPrintEx(-1, -1, L"Usage: %s", g_ProgName);
+    } else {
+        ShellPrintEx(-1, -1, L"Usage: ");
+    }
     UINTN i = 0;
     while (ParamTable[i].ValueType != VALTYPE_NONE) {
-        GetArgName(ParamTable[i].HelpStr, ArgName, ARG_NAME_SIZE, (i+1 <= ManParamCount), DefaultArgName);
+        GetArgName(ParamTable[i].HelpStr, ArgName, ARG_NAME_SIZE, (i+1 <= ManParamCount), g_DefaultArgName);
         ShellPrintEx(-1, -1, L" %s", ArgName);
         i++;
     }
@@ -644,7 +648,7 @@ STATIC VOID ShowHelp(IN CONST CHAR16 *ProgName, IN UINTN ManParamCount, IN PARAM
         ShellPrintEx(-1, -1, L"\n Parameters:\n");
         i = 0;
         while (ParamTable[i].ValueType != VALTYPE_NONE) {
-            HelpIdx = GetArgName(ParamTable[i].HelpStr, ArgName, ARG_NAME_SIZE, (i+1 <= ManParamCount), DefaultArgName);
+            HelpIdx = GetArgName(ParamTable[i].HelpStr, ArgName, ARG_NAME_SIZE, (i+1 <= ManParamCount), g_DefaultArgName);
             // get rid of spaces below ###
             ShellPrintEx(-1, -1, L"  %s%s     %s\n", ArgName, &pad[StrLen(ArgName)], &ParamTable[i].HelpStr[HelpIdx]);
             i++;
@@ -655,7 +659,7 @@ STATIC VOID ShowHelp(IN CONST CHAR16 *ProgName, IN UINTN ManParamCount, IN PARAM
     if (SwTable) {
         i = 0;
         while (SwTable[i].SwitchNecessity != NO_SW) {
-            HelpIdx = GetArgName(SwTable[i].HelpStr, ArgName, ARG_NAME_SIZE, TRUE, (SwTable[i].ValueType == VALTYPE_NONE) ? NULL : DefaultArgName);
+            HelpIdx = GetArgName(SwTable[i].HelpStr, ArgName, ARG_NAME_SIZE, TRUE, (SwTable[i].ValueType == VALTYPE_NONE) ? NULL : g_DefaultArgName);
             CHAR16 SeperatorChar = L',';
             CHAR16 *SwStr1 = SwTable[i].SwStr1;
             CHAR16 *SwStr2 = SwTable[i].SwStr2;
@@ -688,9 +692,9 @@ STATIC VOID ShowHelp(IN CONST CHAR16 *ProgName, IN UINTN ManParamCount, IN PARAM
         }
     }
     // break switch
-    ShellPrintEx(-1, -1, L"  %s, %s %s%s\n", BreakSwStr1, BreakSwStr2, &pad[StrLen(BreakSwStr2)], BreakSwStr);
+    ShellPrintEx(-1, -1, L"  %s, %s %s%s\n", g_BreakSwStr1, g_BreakSwStr2, &pad[StrLen(g_BreakSwStr2)], g_BreakSwStr);
     // help switch
-    ShellPrintEx(-1, -1, L"  %s, %s %s%s\n\n", HelpSwStr1, HelpSwStr2, &pad[StrLen(HelpSwStr2)], HelpSwStr);
+    ShellPrintEx(-1, -1, L"  %s, %s %s%s\n\n", g_HelpSwStr1, g_HelpSwStr2, &pad[StrLen(g_HelpSwStr2)], g_HelpSwStr);
 }
 
 /**
@@ -708,7 +712,7 @@ BOOLEAN CheckProgAbort(BOOLEAN PrintMsg)
             ) {
             abort = TRUE;
             if (PrintMsg) {
-                ShellPrintEx(-1, -1, L"%H%s%N: User Aborted!\r\n", ProgName);
+                ShellPrintEx(-1, -1, L"%H%s%N: User Aborted!\r\n", g_ProgName);
             }
         }
     }
