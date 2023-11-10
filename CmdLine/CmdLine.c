@@ -714,6 +714,7 @@ BOOLEAN CheckProgAbort(BOOLEAN PrintMsg)
             if (PrintMsg) {
                 ShellPrintEx(-1, -1, L"%H%s%N: User Aborted!\r\n", g_ProgName);
             }
+            break;
         }
     }
     return abort;
